@@ -1,155 +1,424 @@
-#include<iostream> 
+#include <iostream>
+#include <vector>
+#include <fstream>
+#include <sstream>
+#include <algorithm>
 #include <tabulate/table.hpp>
-#include <xlnt/xlnt.hpp>
+
 using namespace std;
 using namespace tabulate;
 
-// Encapsulation concept ! 
-class Student {
-    private: 
-        string name; 
-        int age; 
-    public: 
-        Student(string name, int age ){
-            this-> name = name; 
-            this -> age = age; 
-        }
-        string getName(){
-            return name; 
-        }
-        int getAge(){
-            return age; 
-        }
+// ======================================
+// ROOM CLASS
+// ======================================
 
-        void setName(string name ){
-            this-> name = name; 
-        }
-        void setAge(int age ){
-            this-> age = age; 
-        }
-}; 
+class Room {
 
+private:
+    int roomNumber;
+    string roomType;
+    string status;
+    double price;
 
-void printMenu(vector<string> items ){
-    Table table; 
-    table.add_row({"NO", "Menu "}); 
-    for(int i = 0 ; i<items.size(); i++){
-        table.add_row({to_string(i+1), items[i]});
+public:
+
+    Room(int roomNumber,
+         string roomType,
+         string status,
+         double price)
+    {
+        this->roomNumber = roomNumber;
+        this->roomType = roomType;
+        this->status = status;
+        this->price = price;
     }
-    table[0].format().font_style({FontStyle::bold});
-    cout<<table<<endl; 
+
+    int getRoomNumber() {
+        return roomNumber;
+    }
+
+    string getRoomType() {
+        return roomType;
+    }
+
+    string getStatus() {
+        return status;
+    }
+
+    double getPrice() {
+        return price;
+    }
+
+    void setRoomType(string roomType) {
+        this->roomType = roomType;
+    }
+
+    void setStatus(string status) {
+        this->status = status;
+    }
+
+    void setPrice(double price) {
+        this->price = price;
+    }
+};
+
+// ======================================
+// PRINT MENU
+// ======================================
+
+void printMenu(vector<string> items) {
+
+    Table table;
+
+    table.add_row({"NO", "HOTEL MENU"});
+
+    for (int i = 0; i < items.size(); i++) {
+
+        table.add_row({
+            to_string(i + 1),
+            items[i]
+        });
+    }
+
+    table[0]
+        .format()
+        .font_style({FontStyle::bold})
+        .font_color(Color::yellow);
+
+    table.column(0)
+        .format()
+        .font_color(Color::cyan);
+
+    table.column(1)
+        .format()
+        .font_color(Color::green);
+
+    cout << table << endl;
 }
 
-void printStudentTable(vector<Student> students){
-    Table table; 
-    table.add_row({"Name", "Age"}); 
-    for(Student student : students){
-        table.add_row({student.getName(),to_string(student.getAge())});
+// ======================================
+// DISPLAY ROOM TABLE
+// ======================================
+
+void printRoomTable(vector<Room> rooms) {
+
+    if (rooms.empty()) {
+
+        cout << "No Room Data Found ❌"
+             << endl;
+
+        return;
     }
-    cout<<table<<endl; 
-    
+
+    Table table;
+
+    table.add_row({
+        "Row",
+        "Room No",
+        "Room Type",
+        "Status",
+        "Price"
+    });
+
+    int row = 1;
+
+    for (Room room : rooms) {
+
+        table.add_row({
+
+            to_string(row),
+            to_string(room.getRoomNumber()),
+            room.getRoomType(),
+            room.getStatus(),
+            "$" + to_string((int)room.getPrice())
+        });
+
+        row++;
+    }
+
+    table[0]
+        .format()
+        .font_style({FontStyle::bold})
+        .font_color(Color::yellow)
+        .background_color(Color::blue);
+
+    cout << table << endl;
 }
 
-// Related to excel 
-void writeVectorToExcel(string filename,
-     vector<Student> students){
-    xlnt::workbook wb; 
-    auto ws = wb.active_sheet(); 
-    ws.title("Sheet1"); 
+// ======================================
+// SAVE DATA TO CSV FILE
+// ======================================
 
-    // table header 
-    ws.cell("A1").value("Name"); 
-    ws.cell("B1" ).value("Age");
+void saveRoomsToFile(
+    string filename,
+    vector<Room> rooms)
+{
+    ofstream file(filename);
 
-    // insert all the data into row 
-    int row = 2; 
-    for(auto student: students){
-        ws.cell("A"+to_string(row)).value(student.getName()); 
-        ws.cell("B"+to_string(row)).value(student.getAge()); 
-        row++; 
+    for (Room room : rooms) {
+
+        file
+        << room.getRoomNumber() << ","
+        << room.getRoomType() << ","
+        << room.getStatus() << ","
+        << room.getPrice()
+        << endl;
     }
-    wb.save(filename); 
-    cout<<"Successfuly saved vector to the excel file"<<endl; 
 
+    file.close();
+
+    cout << "Saved Successfully ✅"
+         << endl;
 }
 
-vector<Student> readStudentsFromExcel(const string& filename){
-    vector<Student> students; 
-    xlnt::workbook wb; 
+// ======================================
+// LOAD DATA FROM CSV FILE
+// ======================================
 
-     try{
-         wb.load(filename); 
-     }catch(...){
-         cout<<"Excel file cannot be open for reading!! ❌"<<endl; 
-         return students; 
-     }
-   
-    // open sheet , loop through row and convert to vector 
-    xlnt::worksheet ws = wb.active_sheet(); // Sheet1 
-    for( auto row : ws.rows(false)){
-        // skip table header 
-        if( row[0].to_string()== "Name") continue; 
+vector<Room> loadRoomsFromFile(
+    string filename)
+{
+    vector<Room> rooms;
 
-        string name; 
-        int age; 
-        name= row[0].to_string(); 
-        age = stoi(row[1].to_string()); 
+    ifstream file(filename);
 
-        Student student(name, age); 
-        students.push_back(student); 
+    string line;
+
+    while (getline(file, line)) {
+
+        if (line.empty()) continue;
+
+        stringstream ss(line);
+
+        string roomNo;
+        string type;
+        string status;
+        string price;
+
+        getline(ss, roomNo, ',');
+        getline(ss, type, ',');
+        getline(ss, status, ',');
+        getline(ss, price, ',');
+
+        Room room(
+            stoi(roomNo),
+            type,
+            status,
+            stod(price)
+        );
+
+        rooms.push_back(room);
     }
-    return students; 
+
+    file.close();
+
+    return rooms;
 }
 
+// ======================================
+// MAIN FUNCTION
+// ======================================
 
-int main(){
-    system("clear"); 
-    string filename = "studentdata.xlsx"; 
+int main() {
+
+    system("clear");
+
+    string filename = "hoteldata.csv";
+
     vector<string> programMenu = {
-        "Insert new student ", 
-        "Edit Student info ", 
-        "Delete Student ", 
-        "Show All Student ", 
+
+        "Add New Room",
+        "Delete Room",
+        "Show All Rooms",
+        "Search Room",
+        "Sort Room By Price",
         "Exit"
     };
-    int option; 
-    vector<Student> studentLists = 
-    readStudentsFromExcel(filename); 
 
-    do{
-        printMenu(programMenu); 
-        cout<<"Choose you option : "; 
-        cin>>option; 
-        switch(option){
-            case 1: 
-            {
-                string name; 
-                int age; 
-                cout<<"Enter Student Name: "; 
-                cin.ignore();
-                getline(cin,name); 
-                cout<<"Enter Student Age : "; 
-                cin>>age; 
-                Student newStudent(name, age); 
+    int option;
 
-                studentLists.push_back(newStudent); 
-                writeVectorToExcel(filename,studentLists); 
+    vector<Room> roomLists =
+        loadRoomsFromFile(filename);
 
-            }
-            break; 
-            case 3: 
-            {
-                int row; // 1 , 2 , 3 
-                cout<<"Enter row to delete : "; 
-                cin>>row; 
-                studentLists.erase(studentLists.begin() + row -1); 
-                writeVectorToExcel(filename, studentLists); 
-            }
-            break; 
-            case 4: 
-                printStudentTable(studentLists); 
-            break; 
+    do {
+
+        printMenu(programMenu);
+
+        cout << "Choose Option : ";
+        cin >> option;
+
+        switch (option) {
+
+        // ==================================
+        // ADD ROOM
+        // ==================================
+
+        case 1:
+        {
+            int roomNumber;
+            string roomType;
+            string status;
+            double price;
+
+            cout << "Enter Room Number : ";
+            cin >> roomNumber;
+
+            cin.ignore();
+
+            cout << "Enter Room Type : ";
+            getline(cin, roomType);
+
+            cout << "Enter Status : ";
+            getline(cin, status);
+
+            cout << "Enter Price : ";
+            cin >> price;
+
+            Room newRoom(
+                roomNumber,
+                roomType,
+                status,
+                price
+            );
+
+            roomLists.push_back(newRoom);
+
+            saveRoomsToFile(
+                filename,
+                roomLists
+            );
         }
-    }while(option!=5); 
-    return 0 ; 
+        break;
+
+        // ==================================
+        // DELETE ROOM
+        // ==================================
+
+        case 2:
+        {
+            printRoomTable(roomLists);
+
+            int row;
+
+            cout << "Enter Row To Delete : ";
+            cin >> row;
+
+            if (row > 0 &&
+                row <= roomLists.size())
+            {
+                roomLists.erase(
+                    roomLists.begin() + row - 1
+                );
+
+                saveRoomsToFile(
+                    filename,
+                    roomLists
+                );
+
+                cout << "Deleted Successfully ✅"
+                     << endl;
+            }
+            else {
+
+                cout << "Invalid Row ❌"
+                     << endl;
+            }
+        }
+        break;
+
+        // ==================================
+        // SHOW ALL ROOMS
+        // ==================================
+
+        case 3:
+        {
+            printRoomTable(roomLists);
+        }
+        break;
+
+        // ==================================
+        // SEARCH ROOM
+        // ==================================
+
+        case 4:
+        {
+            int searchRoom;
+
+            cout << "Enter Room Number : ";
+            cin >> searchRoom;
+
+            bool found = false;
+
+            vector<Room> result;
+
+            for (Room room : roomLists) {
+
+                if (room.getRoomNumber()
+                    == searchRoom)
+                {
+                    result.push_back(room);
+
+                    found = true;
+                }
+            }
+
+            if (found) {
+
+                printRoomTable(result);
+
+            } else {
+
+                cout << "Room Not Found ❌"
+                     << endl;
+            }
+        }
+        break;
+
+        // ==================================
+        // SORT ROOM
+        // ==================================
+
+        case 5:
+        {
+            sort(
+                roomLists.begin(),
+                roomLists.end(),
+
+                [](Room a, Room b) {
+
+                    return a.getPrice()
+                        < b.getPrice();
+                }
+            );
+
+            printRoomTable(roomLists);
+        }
+        break;
+
+        // ==================================
+        // EXIT
+        // ==================================
+
+        case 6:
+        {
+            cout << "Exiting Program..."
+                 << endl;
+        }
+        break;
+
+        // ==================================
+        // DEFAULT
+        // ==================================
+
+        default:
+        {
+            cout << "Invalid Option ❌"
+                 << endl;
+        }
+
+        }
+
+    } while (option != 6);
+
+    return 0;
 }
