@@ -1,3 +1,5 @@
-1,Single,Avaiable,120.5
-2,Family,Available,160.5
-3,VIP Room,Booked,199
+101,Single,Booked,50
+102,Double,Available,80
+103,VIP,Available,150
+104,Family,Available,120
+105,Suite,Available,200

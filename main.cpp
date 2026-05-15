@@ -4,6 +4,7 @@
 #include <sstream>
 #include <algorithm>
 #include <tabulate/table.hpp>
+#include <map>
 
 using namespace std;
 using namespace tabulate;
@@ -61,6 +62,39 @@ public:
         this->price = price;
     }
 };
+
+
+class Booking {
+
+private:
+    string username;
+    int roomNumber;
+
+public:
+
+    Booking(
+        string username,
+        int roomNumber
+    )
+    {
+        this->username =
+            username;
+
+        this->roomNumber =
+            roomNumber;
+    }
+
+    string getUsername()
+    {
+        return username;
+    }
+
+    int getRoomNumber()
+    {
+        return roomNumber;
+    }
+};
+
 
 // ======================================
 // PRINT MENU
@@ -227,18 +261,25 @@ int main() {
 
     vector<string> programMenu = {
 
-        "Add New Room",
-        "Delete Room",
-        "Show All Rooms",
-        "Search Room",
-        "Sort Room By Price",
-        "Exit"
+    "Login",
+    "Register",
+    "Exit"
     };
 
     int option;
 
+    string username;
+    string password;
+
+    string adminUsername = "admin";
+    string adminPassword = "123";
+    map<string, string> guestAccounts;
+
+    bool isLogin = false;
+    guestAccounts["guest"] = "123";
     vector<Room> roomLists =
         loadRoomsFromFile(filename);
+        vector<Booking> bookings;
 
     do {
 
@@ -253,172 +294,658 @@ int main() {
         // ADD ROOM
         // ==================================
 
-        case 1:
+       case 1:
+{
+    cout << "Enter Username : ";
+    cin >> username;
+
+    cout << "Enter Password : ";
+    cin >> password;
+
+    if (username == adminUsername &&
+        password == adminPassword)
+    {
+        cout
+        << "\nLogin Successful ✅\n";
+
+        isLogin = true;
+
+        while(isLogin)
         {
-            int roomNumber;
-            string roomType;
-            string status;
-            double price;
+            vector<string> adminMenu = {
 
-            cout << "Enter Room Number : ";
-            cin >> roomNumber;
+    "Add New Room",
+    "Update Room",
+    "Delete Room",
+    "Show All Rooms",
+    "Search Room",
+    "Sort Room By Price",
+    "View All Bookings",
+    "Logout"
+};
 
-            cin.ignore();
+            int adminOption;
 
-            cout << "Enter Room Type : ";
-            getline(cin, roomType);
+            printMenu(adminMenu);
 
-            cout << "Enter Status : ";
-            getline(cin, status);
+            cout
+            << "Choose Option : ";
 
-            cout << "Enter Price : ";
-            cin >> price;
+            cin >> adminOption;
 
-            Room newRoom(
-                roomNumber,
-                roomType,
-                status,
-                price
-            );
-
-            roomLists.push_back(newRoom);
-
-            saveRoomsToFile(
-                filename,
-                roomLists
-            );
-        }
-        break;
-
-        // ==================================
-        // DELETE ROOM
-        // ==================================
-
-        case 2:
-        {
-            printRoomTable(roomLists);
-
-            int row;
-
-            cout << "Enter Row To Delete : ";
-            cin >> row;
-
-            if (row > 0 &&
-                row <= roomLists.size())
+            switch(adminOption)
             {
-                roomLists.erase(
-                    roomLists.begin() + row - 1
+
+            case 1:
+            {
+                int roomNumber;
+                string roomType;
+                string status;
+                double price;
+
+                cout
+                << "Enter Room Number : ";
+
+                cin >> roomNumber;
+
+                cin.ignore();
+
+                cout
+                << "Enter Room Type : ";
+
+                getline(cin,
+                        roomType);
+
+                cout
+                << "Enter Status : ";
+
+                getline(cin,
+                        status);
+
+                cout
+                << "Enter Price : ";
+
+                cin >> price;
+
+                Room newRoom(
+                    roomNumber,
+                    roomType,
+                    status,
+                    price
+                );
+
+                roomLists.push_back(
+                    newRoom
                 );
 
                 saveRoomsToFile(
                     filename,
                     roomLists
                 );
-
-                cout << "Deleted Successfully ✅"
-                     << endl;
             }
-            else {
+            break;
 
-                cout << "Invalid Row ❌"
-                     << endl;
-            }
-        }
-        break;
+            case 2:
+{
+    printRoomTable(
+        roomLists
+    );
 
-        // ==================================
-        // SHOW ALL ROOMS
-        // ==================================
+    int roomNumber;
 
-        case 3:
+    cout
+    << "Enter Room Number To Update : ";
+
+    cin
+    >> roomNumber;
+
+    bool found = false;
+
+    for(Room &room :
+        roomLists)
+    {
+        if(room
+            .getRoomNumber()
+            ==
+            roomNumber)
         {
-            printRoomTable(roomLists);
+            string newType;
+            string newStatus;
+            double newPrice;
+
+            cin.ignore();
+
+            cout
+            << "New Room Type : ";
+
+            getline(
+                cin,
+                newType
+            );
+
+            cout
+            << "New Status : ";
+
+            getline(
+                cin,
+                newStatus
+            );
+
+            cout
+            << "New Price : ";
+
+            cin
+            >> newPrice;
+
+            room.setRoomType(
+                newType
+            );
+
+            room.setStatus(
+                newStatus
+            );
+
+            room.setPrice(
+                newPrice
+            );
+
+            saveRoomsToFile(
+                filename,
+                roomLists
+            );
+
+            cout
+            << "Room Updated ✅"
+            << endl;
+
+            found = true;
+        }
+    }
+
+    if(!found)
+    {
+        cout
+        << "Room Not Found ❌"
+        << endl;
+    }
+}
+break;
+
+            case 3:
+{
+    int row;
+
+    printRoomTable(
+        roomLists
+    );
+
+    cout
+    << "Enter Row To Delete : ";
+
+    cin
+    >> row;
+
+    if(row > 0 &&
+       row <= roomLists.size())
+    {
+        roomLists.erase(
+            roomLists.begin()
+            + row - 1
+        );
+
+        saveRoomsToFile(
+            filename,
+            roomLists
+        );
+
+        cout
+        << "Room Deleted Successfully ✅"
+        << endl;
+    }
+
+    else {
+
+        cout
+        << "Invalid Row ❌"
+        << endl;
+    }
+}
+break;
+
+            case 4:
+            {
+                printRoomTable(
+                    roomLists
+                );
+            }
+            break;
+
+            case 5:
+            {
+                int searchRoom;
+
+                cout
+                << "Enter Room Number : ";
+
+                cin
+                >> searchRoom;
+
+                bool found = false;
+
+                for (Room room :
+                    roomLists)
+                {
+                    if(room
+                        .getRoomNumber()
+                        ==
+                        searchRoom)
+                    {
+                        vector<Room>
+                        result;
+
+                        result
+                        .push_back(
+                            room
+                        );
+
+                        printRoomTable(
+                            result
+                        );
+
+                        found = true;
+                    }
+                }
+
+                if(!found)
+                {
+                    cout
+                    << "Room Not Found ❌"
+                    << endl;
+                }
+            }
+            break;
+
+            case 6:
+            {
+                sort(
+                    roomLists.begin(),
+                    roomLists.end(),
+
+                    [](Room a,
+                       Room b)
+                {
+                    return
+                    a.getPrice()
+                    <
+                    b.getPrice();
+                });
+
+                printRoomTable(
+                    roomLists
+                );
+            }
+            break;
+        case 7:
+        {
+          cout
+          << "\nAll Bookings:\n";
+        
+          if(bookings.empty())
+         {
+              cout
+              << "No Booking Found ❌"
+              << endl;
+          }
+      
+         for(
+              Booking booking :
+              bookings
+          )
+          {
+               cout
+               << "Username : "
+               << booking.getUsername()
+               << " | Room Number : "
+               << booking.getRoomNumber()
+               << endl;
+           }
         }
         break;
 
-        // ==================================
-        // SEARCH ROOM
-        // ==================================
+            case 8:
+            {
+                isLogin = false;
 
-        case 4:
+                cout
+                << "Logout Successful ✅"
+                << endl;
+            }
+            break;
+            }
+        }
+    }
+
+else if(
+    guestAccounts.find(username)
+    != guestAccounts.end()
+    &&
+    guestAccounts[username]
+    == password
+)
+{
+    cout
+    << "\nGuest Login Successful ✅\n";
+    
+    string currentGuest =
+    username;
+
+    bool guestLogin = true;
+
+    while(guestLogin)
+    {
+        vector<string>
+      guestMenu = {
+
+    "View Rooms",
+    "Search Room",
+    "Book Room",
+    "My Booking",
+    "Cancel Booking",
+    "Logout"
+};
+
+        int guestOption;
+
+        printMenu(
+            guestMenu
+        );
+
+        cout
+        << "Choose Option : ";
+
+        cin
+        >> guestOption;
+
+        switch(
+            guestOption
+        )
+        {
+        case 1:
+        {
+            printRoomTable(
+                roomLists
+            );
+        }
+        break;
+
+        case 2:
         {
             int searchRoom;
 
-            cout << "Enter Room Number : ";
-            cin >> searchRoom;
+            cout
+            << "Enter Room Number : ";
 
-            bool found = false;
+            cin
+            >> searchRoom;
 
-            vector<Room> result;
+            vector<Room>
+            result;
 
-            for (Room room : roomLists) {
-
-                if (room.getRoomNumber()
-                    == searchRoom)
+            for(
+                Room room :
+                roomLists
+            )
+            {
+                if(room
+                    .getRoomNumber()
+                    ==
+                    searchRoom)
                 {
-                    result.push_back(room);
-
-                    found = true;
+                    result
+                    .push_back(
+                        room
+                    );
                 }
             }
 
-            if (found) {
-
-                printRoomTable(result);
-
-            } else {
-
-                cout << "Room Not Found ❌"
-                     << endl;
-            }
+            printRoomTable(
+                result
+            );
         }
         break;
 
-        // ==================================
-        // SORT ROOM
-        // ==================================
+        case 3:
+{
+    printRoomTable(
+        roomLists
+    );
 
-        case 5:
+    int roomNumber;
+
+    cout
+    << "Enter Room Number To Book : ";
+
+    cin
+    >> roomNumber;
+
+    bool found = false;
+
+    for(Room &room :
+        roomLists)
+    {
+        if(room
+            .getRoomNumber()
+            ==
+            roomNumber)
         {
-            sort(
-                roomLists.begin(),
-                roomLists.end(),
+            bookings.push_back(
 
-                [](Room a, Room b) {
-
-                    return a.getPrice()
-                        < b.getPrice();
-                }
+                Booking(
+                    currentGuest,
+                    roomNumber
+                )
             );
 
-            printRoomTable(roomLists);
+                   room.setStatus(
+           "Booked"
+        );
+
+        saveRoomsToFile(
+           filename,
+           roomLists
+        );
+
+            cout
+            << "Room Booked Successfully ✅"
+            << endl;
+
+            found = true;
         }
-        break;
+    }
 
-        // ==================================
-        // EXIT
-        // ==================================
+    if(!found)
+    {
+        cout
+        << "Room Not Found ❌"
+        << endl;
+    }
+}
+break;
 
-        case 6:
+        case 4:
+{
+    bool found = false;
+
+    cout
+    << "\nMy Bookings:\n";
+
+    for(
+        Booking booking :
+        bookings
+    )
+    {
+        if(
+            booking
+            .getUsername()
+            ==
+            currentGuest
+        )
         {
-            cout << "Exiting Program..."
-                 << endl;
+            cout
+            << "Room Number : "
+            << booking
+                .getRoomNumber()
+            << endl;
+
+            found = true;
         }
-        break;
+    }
 
-        // ==================================
-        // DEFAULT
-        // ==================================
+    if(!found)
+    {
+        cout
+        << "No Booking Found ❌"
+        << endl;
+    }
+}
+break;
 
-        default:
+
+case 5:
+{
+    int roomNumber;
+
+    cout
+    << "Enter Room Number To Cancel : ";
+
+    cin
+    >> roomNumber;
+
+    bool found = false;
+
+    for(
+        int i = 0;
+        i < bookings.size();
+        i++
+    )
+    {
+        if(
+            bookings[i]
+            .getUsername()
+            ==
+            currentGuest
+            &&
+            bookings[i]
+            .getRoomNumber()
+            ==
+            roomNumber
+        )
         {
-            cout << "Invalid Option ❌"
-                 << endl;
+            bookings.erase(
+                bookings.begin()
+                + i
+            );
+
+                   for(Room &room :
+           roomLists)
+        {
+           if(room
+               .getRoomNumber()
+               ==
+               roomNumber)
+           {
+               room.setStatus(
+                   "Available"
+               );
+           }
         }
 
-        }
+        saveRoomsToFile(
+           filename,
+           roomLists
+        );
 
-    } while (option != 6);
+            cout
+            << "Booking Cancelled ✅"
+            << endl;
+
+            found = true;
+
+            break;
+        }
+    }
+
+    if(!found)
+    {
+        cout
+        << "Booking Not Found ❌"
+        << endl;
+    }
+}
+break;
+
+case 6:
+{
+    guestLogin = false;
+
+    cout
+    << "Logout Successful ✅"
+    << endl;
+}
+break;
+    
+        }
+    }
+}
+
+else {
+
+    cout
+    << "Invalid Login ❌"
+    << endl;
+}
+}
+break;
+
+case 2:
+{
+    string newUsername;
+    string newPassword;
+
+    cout
+    << "Create Username : ";
+
+    cin
+    >> newUsername;
+
+    cout
+    << "Create Password : ";
+
+    cin
+    >> newPassword;
+
+    guestAccounts[
+        newUsername
+    ]
+    =
+    newPassword;
+
+    cout
+    << "Registered Successfully ✅"
+    << endl;
+}
+break;
+       
+case 3:
+{
+    cout
+    << "Exiting Program..."
+    << endl;
+}
+break;
+    }
+
+   } while(option != 3);
 
     return 0;
 }
